@@ -2,7 +2,7 @@ import easyocr
 from PIL import Image
 import numpy as np
 import yake  # thư viện lọc keyword
-import gradio as gr 
+import gradio as gr
 
 # Initialize EasyOCR reader (English)
 reader = easyocr.Reader(['en'], gpu=False)
