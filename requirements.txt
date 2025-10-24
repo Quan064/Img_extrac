@@ -1,4 +1,5 @@
 Flask
-pytesseract
+gradio
+easyocr
 Pillow
 yake
