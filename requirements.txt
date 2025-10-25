@@ -1,5 +1,8 @@
-Flask
-gradio
 easyocr
-Pillow
-yake
+keybert
+sentence-transformers
+gradio
+pillow
+numpy
+scikit-learn
+torch
