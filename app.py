@@ -1,35 +1,49 @@
-import easyocr
 from PIL import Image
-import numpy as np
-from keybert import KeyBERT
 import gradio as gr
+from io import BytesIO
+import os
+from dotenv import load_dotenv
 
-# Initialize EasyOCR reader (English)
-reader = easyocr.Reader(['en'], gpu=False)
+from google import genai
+from google.genai import types
 
-# Initialize KeyBERT model
-kw_model = KeyBERT()
+# Tạo client và gửi request
+load_dotenv()
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
+PROMPT = r"""Yêu cầu: Trích toàn bộ văn bản trong ảnh, từ văn bản đó lọc những từ khóa mà bạn nghĩ sẽ giúp ích cho việc tìm kiếm trên google search
+Định dạng câu trả lời: "<văn bản từ ảnh>\n<các từ khóa cách nhau bởi dấu ', '>"
+"""
 
 def extract(image: Image.Image):
     if image is None:
         return "No image provided", "", ""
 
-    img_np = np.array(image)
-    result = reader.readtext(img_np)
-    text = " ".join([item[1] for item in result])
+    # Chuyển ảnh thành bytes, mã hoá base64
+    buffer = BytesIO()
+    image.save(buffer, format="JPEG")
+    img_bytes = buffer.getvalue()
 
-    if text:
-        keywords = kw_model.extract_keywords(text, top_n=5)
-        keywords = [kw[0] for kw in keywords]
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",  # hoặc gemini-2.5-pro nếu account bạn có quyền
+        contents=[
+            types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"),
+            types.Part.from_text(text=PROMPT)
+        ],
+    )
+
+    text = response.candidates[0].content.parts[0].text.strip()
+
+    if "\n" in text:
+        full_text, keywords = text.rsplit("\n", 1)
     else:
-        keywords = ["(no text detected)"]
+        full_text, keywords = text, ""
 
     # Open Google search in a new tab
-    search_query = '+'.join(keywords).replace(' ', '+')
+    search_query = keywords.replace(' ', '+')
     google_url = f"https://www.google.com/search?q={search_query}&udm=50"
 
-    return text, ", ".join(keywords), google_url
+    return full_text, keywords, google_url
 
 def make_ui():
     with gr.Blocks() as demo:
