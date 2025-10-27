@@ -25,7 +25,7 @@ def extract(image: Image.Image):
     img_bytes = buffer.getvalue()
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash",  # hoặc gemini-2.5-pro nếu account bạn có quyền
+        model="gemini-2.5-flash",  # hoặc gemini-2.5-pro nếu account bạn có quyền
         contents=[
             types.Part.from_bytes(data=img_bytes, mime_type="image/jpeg"),
             types.Part.from_text(text=PROMPT)
